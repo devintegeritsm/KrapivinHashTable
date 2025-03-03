@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFrameworks>netstandard2.1;net8.0;net9.0</TargetFrameworks>
-	<LangVersion>latest</LangVersion>
-	<Nullable>enable</Nullable>
+	<TargetFramework>netstandard2.1</TargetFramework>
+	<!--<LangVersion>latest</LangVersion>-->
+	<Nullable>disable</Nullable>
 	  
 	<AssemblyName>KrapivinHashTable</AssemblyName>
     <RootNamespace>KrapivinHashTable</RootNamespace>
@@ -18,34 +18,26 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>	  <RootNamespace>KrapivinHashTable</RootNamespace>
-	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  
 	  <PackageId>KrapivinHashTable</PackageId>
 	  <Version>1.0.0</Version>
 	  <Authors>Grok and Calude</Authors>
 	  <Company>Integer ITSM</Company>
 	  <Description>A .NET implementation of Krapivin's elastic hashing hash table with MurmurHash3 from MurmurHash.Net.</Description>
 	  <Copyright>Copyright © 2025</Copyright>
-	  <PackageProjectUrl>https://github.com/devintegeritsm/KrapivinHashTable</PackageProjectUrl>
 	  <RepositoryUrl>https://github.com/devintegeritsm/KrapivinHashTable</RepositoryUrl>
-	  <RepositoryType>git</RepositoryType>
 	  <PackageTags>hashtable; krapivin; murmurhash; elastic-hashing; dotnet</PackageTags>
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	  <Title>Krapivin Hash Table</Title>
-	  <PackageReleaseNotes>Initial release of KrapivinHashTable</PackageReleaseNotes>
+	  <PackageReleaseNotes>Initial release</PackageReleaseNotes>
 
 	  <!-- XML Documentation -->
 	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
 	  <NoWarn>$(NoWarn);1591</NoWarn>
 	  <!-- Suppresses warnings about missing XML comments -->
 
-	  <!-- Source Link - enables debugging into the package -->
-	  <PublishRepositoryUrl>true</PublishRepositoryUrl>
-	  <EmbedUntrackedSources>true</EmbedUntrackedSources>
-	  <IncludeSymbols>true</IncludeSymbols>
-	  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-
 	  <!-- Other build settings -->
-	  <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	  <!-- Set to true to auto-generate package on build -->
 	  <DebugType>portable</DebugType>
 	  <DebugSymbols>true</DebugSymbols>
@@ -58,24 +50,17 @@
 
   <ItemGroup>
     <PackageReference Include="MurmurHash.Net" Version="0.0.2" />
-	<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 
 	<!-- Include README in the package -->
-
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+	
 	<!-- Conditional compilation symbols -->
 
 	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
 		<DefineConstants>NETSTANDARD;NETSTANDARD2_1</DefineConstants>
 	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
-		<DefineConstants>NET8_0;NETCOREAPP</DefineConstants>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
-		<DefineConstants>NET9_0;NETCOREAPP</DefineConstants>
-	</PropertyGroup>
-
 
 </Project>
