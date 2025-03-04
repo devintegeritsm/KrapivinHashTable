@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFramework>netstandard2.1</TargetFramework>
+	<!--<TargetFramework>netstandard2.1</TargetFramework>-->
+	<TargetFrameworks>netstandard2.1;net8.0;net9.0;</TargetFrameworks>
 	<!--<LangVersion>latest</LangVersion>-->
 	<Nullable>disable</Nullable>
 	  
@@ -45,10 +46,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\README.md" Link="README.md" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="MurmurHash.Net" Version="0.0.2" />
   </ItemGroup>
 
@@ -62,5 +59,25 @@
 	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
 		<DefineConstants>NETSTANDARD;NETSTANDARD2_1</DefineConstants>
 	</PropertyGroup>
+
+
+	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+		<DefineConstants>NETSTANDARD;NETSTANDARD2_1</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
+		<DefineConstants>NET6_0;NETCOREAPP</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+		<DefineConstants>NET8_0;NETCOREAPP</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+		<DefineConstants>NET9_0;NETCOREAPP</DefineConstants>
+	</PropertyGroup>
+
+
+
 
 </Project>
