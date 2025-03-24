@@ -82,6 +82,13 @@ Collisions are resolved using quadratic probing with the formula `(n² + n)/2`, 
 
 The library uses MurmurHash3, a high-quality non-cryptographic hash function that provides excellent distribution with minimal collisions.
 
+### Hash distribution for non-string types
+
+- .NET's GetHashCode() implementations are already designed to provide good distribution for hash tables
+- For most practical use cases, this distribution is sufficient
+- The additional MurmurHash3 pass might provide marginally better distribution in some edge cases, but at a significant performance cost
+- When dealing with large datasets, the performance gain from avoiding allocations likely outweighs any theoretical distribution improvements
+
 ### Performance Considerations
 
 - The table automatically prevents insertions when the load factor exceeds 90% to maintain good performance.
