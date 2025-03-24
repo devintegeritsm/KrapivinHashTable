@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using MurmurHash;
+using System.Runtime.InteropServices;
 using MurmurHash.Net;
 
 namespace KrapivinHashTable
@@ -42,26 +42,50 @@ namespace KrapivinHashTable
 
         // Hash function using MurmurHash.Net
 
-        private uint Hash(TKey key)
+        private static uint Hash(TKey key)
         {
+            const uint seed = 0; // Default seed value
+
             if (key is string str)
             {
                 // For strings, use a Memory-based approach to avoid unnecessary allocations
                 ReadOnlyMemory<char> memory = str.AsMemory();
 
-                // If MurmurHash3 supports ReadOnlyMemory directly, we could use:
-                // return MurmurHash3.Hash32(memory, 0);
+                // UTF-8 encoding inplementation
+                // byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(str);
 
-                // Since it likely doesn't, we convert to bytes with minimal allocations
-                // This creates a single allocation but avoids intermediate string copies
-                byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(str);
-                return MurmurHash3.Hash32(utf8Bytes, 0);
+                // NOTE: This is different from the original implementation which used UTF-8 encoding.
+                // - PRO: Zero allocations for string hashing
+                // - PRO: Much faster than UTF-8 encoding
+                // - CON: Hash values will differ from previous implementation using UTF-8.GetBytes()
+                // - CON: Dependent on platform endianness (little vs big endian architectures), although
+                //        all the major modern platforms—Windows (both Intel64 and ARM64), macOS, iOS (iPhone),
+                //        and Android—use little-endian representations.  
+                // - CON: Uses UTF-16 representation, which is less consistent for international strings
+                //        than UTF-8 encoding
+                return MurmurHash3.Hash32(MemoryMarshal.AsBytes(memory.Span), seed);
             }
             else
             {
-                // For non-string types, use GetHashCode() directly
-                // This avoids allocations and additional hashing overhead
+                // For non-string types, use GetHashCode and then MurmurHash3
+                // - PRO: Potentially more uniform distribution
+                // - CON: see below
+                //
+                //int hashCode = key.GetHashCode();
+                //byte[] bytes = BitConverter.GetBytes(hashCode);
+                //return MurmurHash3.Hash32(bytes, seed);
+
+                // using GetHashCode() directly
                 // For most practical use cases, this distribution is sufficient
+                // - PRO: Avoids all allocations and additional hashing overhead
+                // - PRO: Takes advantage of the already optimized GetHashCode() implementations
+                //        in .NET types
+                // - PRO: Much simpler and more efficient
+                // - CON: Potentially less uniform distribution than running through MurmurHash3
+                //        (though GetHashCode() is generally well-distributed for most types)
+                // - CON: GetHashCode() is not guaranteed to be stable across different .NET versions,
+                //        so hash values could change with framework updates
+                //
                 return (uint)key.GetHashCode();
             }
         }

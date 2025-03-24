@@ -10,7 +10,7 @@
     <RootNamespace>KrapivinHashTable</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>KrapivinHashTable</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Grok and Calude</Authors>
     <Company>Integer ITSM</Company>
     <Description>A .NET implementation of Krapivin's elastic hashing hash table with MurmurHash3 from MurmurHash.Net.</Description>
@@ -21,7 +21,7 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>	  <RootNamespace>KrapivinHashTable</RootNamespace>
 	  
 	  <PackageId>KrapivinHashTable</PackageId>
-	  <Version>1.0.2</Version>
+	  <Version>1.0.3</Version>
 	  <Authors>Grok and Calude</Authors>
 	  <Company>Integer ITSM</Company>
 	  <Description>A .NET implementation of Krapivin's elastic hashing hash table with MurmurHash3 from MurmurHash.Net.</Description>
