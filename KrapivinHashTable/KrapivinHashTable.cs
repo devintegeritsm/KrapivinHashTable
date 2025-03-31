@@ -1,20 +1,48 @@
-﻿using System;
+﻿using MurmurHash.Net;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using MurmurHash.Net;
 
 namespace KrapivinHashTable
 {
-    public class KrapivinHashTable<TKey, TValue> where TKey : notnull
+    public class KrapivinHashTable<TKey, TValue> :
+        IEnumerable<KeyValuePair<TKey, TValue>>,
+        ICollection<KeyValuePair<TKey, TValue>>,
+        IReadOnlyCollection<KeyValuePair<TKey, TValue>>,
+        IDictionary<TKey, TValue>,
+        IReadOnlyDictionary<TKey, TValue>
+        where TKey : notnull
     {
         private readonly int capacity;
         private readonly int segmentSize;
         private readonly Entry[] table;
         private readonly IEqualityComparer<TKey> comparer;
-        private int count;
 
-        private class Entry
+        public int Count { get; private set; }
+
+        public bool IsReadOnly => false;
+
+        public ICollection<TKey> Keys
+            => table.Where(e => e != null && e.IsOccupied).Select(e => e.Key).ToArray();
+
+        public ICollection<TValue> Values 
+            => table.Where(e => e != null && e.IsOccupied).Select(e => e.Value).ToArray();
+
+        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
+
+        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
+
+        public TValue this[TKey key]
+        { 
+            get => Get(key);
+            set => Insert(key, value);
+        }
+
+        private sealed class Entry
         {
             public TKey Key { get; set; }
             public TValue Value { get; set; }
@@ -26,6 +54,9 @@ namespace KrapivinHashTable
                 Value = value;
                 IsOccupied = true;
             }
+
+            internal KeyValuePair<TKey, TValue> ToKeyValuePair()
+                => new KeyValuePair<TKey, TValue>(Key, Value);
         }
 
         public KrapivinHashTable(int initialCapacity = 1024, int segmentSize = 32, IEqualityComparer<TKey> comparer = null)
@@ -36,7 +67,7 @@ namespace KrapivinHashTable
             this.capacity = initialCapacity;
             this.segmentSize = segmentSize;
             this.table = new Entry[capacity];
-            this.count = 0;
+            Count = 0;
             this.comparer = comparer ?? EqualityComparer<TKey>.Default;
         }
 
@@ -90,10 +121,10 @@ namespace KrapivinHashTable
             }
         }
 
-        public void Insert(TKey key, TValue value)
+        private void Insert(TKey key, TValue value, bool throwWehnExists = false)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
-            if (count >= capacity * 0.9)
+            if (Count >= capacity * 0.9)
                 throw new InvalidOperationException("Hash table is too full. Consider increasing capacity.");
 
             uint hash = Hash(key) % (uint)capacity;
@@ -107,18 +138,21 @@ namespace KrapivinHashTable
                 if (table[index] == null)
                 {
                     table[index] = new Entry(key, value);
-                    count++;
+                    Count++;
                     return;
                 }
                 else if (table[index].IsOccupied && comparer.Equals(table[index].Key, key))
                 {
+                    if (throwWehnExists)
+                        throw new ArgumentException("An item with the same key has already been added.");
+
                     table[index].Value = value; // Update existing value
                     return;
                 }
                 else if (!table[index].IsOccupied)
                 {
                     table[index] = new Entry(key, value); // Reuse deleted slot
-                    count++;
+                    Count++;
                     return;
                 }
             }
@@ -132,18 +166,21 @@ namespace KrapivinHashTable
                 if (table[index] == null)
                 {
                     table[index] = new Entry(key, value);
-                    count++;
+                    Count++;
                     return;
                 }
                 else if (table[index].IsOccupied && comparer.Equals(table[index].Key, key))
                 {
+                    if (throwWehnExists)
+                        throw new ArgumentException("An item with the same key has already been added.");
+
                     table[index].Value = value; // Update existing value
                     return;
                 }
                 else if (!table[index].IsOccupied)
                 {
                     table[index] = new Entry(key, value); // Reuse deleted slot
-                    count++;
+                    Count++;
                     return;
                 }
             }
@@ -151,7 +188,7 @@ namespace KrapivinHashTable
             throw new InvalidOperationException("No available slot found despite load factor check. This is likely a bug.");
         }
 
-        public bool TryGet(TKey key, out TValue value)
+        public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
@@ -201,12 +238,12 @@ namespace KrapivinHashTable
 
         public TValue Get(TKey key)
         {
-            if (TryGet(key, out TValue value))
+            if (TryGetValue(key, out TValue value))
                 return value;
             return default;
         }
 
-        public bool Delete(TKey key)
+        private bool Delete(TKey key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
@@ -224,7 +261,7 @@ namespace KrapivinHashTable
                 if (table[index].IsOccupied && comparer.Equals(table[index].Key, key))
                 {
                     table[index].IsOccupied = false; // Logical deletion
-                    count--;
+                    Count--;
                     return true;
                 }
             }
@@ -241,7 +278,7 @@ namespace KrapivinHashTable
                 if (table[index].IsOccupied && comparer.Equals(table[index].Key, key))
                 {
                     table[index].IsOccupied = false; // Logical deletion
-                    count--;
+                    Count--;
                     return true;
                 }
             }
@@ -255,6 +292,60 @@ namespace KrapivinHashTable
             return (probeCount * probeCount + probeCount) / 2; // Improved quadratic probing sequence
         }
 
-        public int Count => count;
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+        {
+            foreach (var item in table)
+            {
+                yield return item.ToKeyValuePair();
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        public void Add(KeyValuePair<TKey, TValue> item)
+            => Insert(item.Key, item.Value, throwWehnExists: true);
+
+        public void Clear()
+        {
+            Array.Clear(table, 0, table.Length);
+            Count = 0;
+        }
+
+        public bool Contains(KeyValuePair<TKey, TValue> item)
+        {
+            return TryGetValue(item.Key, out TValue value)
+                && EqualityComparer<TValue>.Default.Equals(value, item.Value);
+        }
+
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        {
+            for (int i=arrayIndex; i<table.Length; i++)
+            {
+                array[i] = table[i].ToKeyValuePair();
+            }
+        }
+
+        public bool Remove(KeyValuePair<TKey, TValue> item)
+        {
+            if (TryGetValue(item.Key, out TValue value)
+                && EqualityComparer<TValue>.Default.Equals(value, item.Value))
+            {
+                Delete(item.Key);
+                return true;
+            }
+            return false;
+        }
+
+        public bool ContainsKey(TKey key) 
+            => TryGetValue(key, out _);
+
+        public void Add(TKey key, TValue value)
+            => Insert(key, value, throwWehnExists: true);
+
+        public bool Remove(TKey key)
+            => Delete(key);
     }
 }
